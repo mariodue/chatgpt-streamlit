@@ -5,52 +5,39 @@ import os
 # Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# App config
-st.set_page_config(page_title="ChatGPT with Sidebar", page_icon="💬", layout="wide")
+# Page configuration
+st.set_page_config(page_title="ChatGPT Bootstrap", page_icon="💬", layout="wide")
 
-# CSS Styling for Avatars & Dark Mode Support
+# Inject Bootstrap CSS
 st.markdown("""
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .chat-message {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding: 0.8rem;
-            border-radius: 0.5rem;
+        .chat-container {
+            padding: 20px;
         }
-        .user-message {
-            background-color: #DCF8C6;
+        .chat-card {
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
         }
-        .assistant-message {
-            background-color: #F1F0F0;
-        }
-        [data-theme="dark"] .assistant-message {
-            background-color: #2d2d2d;
-        }
-        [data-theme="dark"] .user-message {
-            background-color: #003e1f;
-        }
-        .avatar {
+        .chat-avatar {
             font-size: 1.8rem;
-        }
-        .message-text {
-            font-size: 1.1rem;
-            line-height: 1.4;
+            margin-right: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
+# Initialize chat states
 if "chats" not in st.session_state:
     st.session_state.chats = {"New Chat": []}
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "New Chat"
 
-# Sidebar: chat history + new chat
-st.sidebar.title("🧠 Chat History")
-chat_titles = list(st.session_state.chats.keys())
+# Sidebar - Chat History
+st.sidebar.markdown('<h4 class="mt-4">🧠 Chat History</h4>', unsafe_allow_html=True)
 
+chat_titles = list(st.session_state.chats.keys())
 selected_chat = st.sidebar.radio("Select chat:", chat_titles, index=chat_titles.index(st.session_state.current_chat))
 st.session_state.current_chat = selected_chat
 
@@ -60,34 +47,42 @@ if st.sidebar.button("➕ New Chat"):
     st.session_state.current_chat = new_title
     st.experimental_rerun()
 
-# Get current conversation
+# Current chat messages
 messages = st.session_state.chats[st.session_state.current_chat]
 
-# Show messages
-st.title("💬 ChatGPT Interface")
+# Title
+st.markdown("<h2 class='mt-3'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
 
-for msg in messages:
-    role = msg["role"]
-    content = msg["content"]
-    avatar = "🧑" if role == "user" else "🤖"
-    css_class = "user-message" if role == "user" else "assistant-message"
+# Message renderer
+def render_message(role, content):
+    is_user = role == "user"
+    avatar = "🧑" if is_user else "🤖"
+    align_class = "ms-auto text-end" if is_user else "me-auto text-start"
+    bg_class = "bg-success-subtle" if is_user else "bg-light-subtle"
+    text_color = "text-dark"
 
-    st.markdown(
-        f"""
-        <div class='chat-message {css_class}'>
-            <div class='avatar'>{avatar}</div>
-            <div class='message-text'>{content}</div>
+    st.markdown(f"""
+        <div class="d-flex {align_class}">
+            <div class="chat-card {bg_class} {text_color} shadow-sm d-flex">
+                <div class="chat-avatar">{avatar}</div>
+                <div>{content}</div>
+            </div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
+
+# Display all messages
+with st.container():
+    st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+    for msg in messages:
+        render_message(msg["role"], msg["content"])
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # Chat input
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_area("You:", key="input", height=80, label_visibility="collapsed", placeholder="Type your message...")
     submitted = st.form_submit_button("Send")
 
-# Send message
+# Handle message submission
 if submitted and user_input.strip():
     messages.append({"role": "user", "content": user_input})
 
