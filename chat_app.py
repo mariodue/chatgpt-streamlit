@@ -76,9 +76,11 @@ if submitted and user_input.strip():
     messages.append({"role": "user", "content": user_input})
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
+        response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        )
+
         )
         assistant_reply = response["choices"][0]["message"]["content"]
         messages.append({"role": "assistant", "content": assistant_reply})
