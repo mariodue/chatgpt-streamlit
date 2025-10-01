@@ -2,13 +2,11 @@ import streamlit as st
 import openai
 import os
 
-# Set OpenAI API key from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Page config
 st.set_page_config(page_title="ChatGPT Bootstrap", page_icon="💬", layout="wide")
 
-# Inject Bootstrap CSS
+# Inject Bootstrap CSS and custom styles
 st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -25,6 +23,16 @@ st.markdown("""
             font-size: 1.8rem;
             margin-right: 10px;
         }
+        /* Center the input form */
+        .input-container {
+            max-width: 600px;
+            margin: 1rem auto 2rem;
+        }
+        /* Rounded textarea without square edges */
+        textarea.form-control {
+            border-radius: 20px !important;
+            resize: none;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -33,24 +41,46 @@ if "chats" not in st.session_state:
     st.session_state.chats = {"New Chat": []}
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "New Chat"
+if "search_term" not in st.session_state:
+    st.session_state.search_term = ""
 
-# Sidebar - Chat History
-st.sidebar.markdown('<h4 class="mt-4">🧠 Chat History</h4>', unsafe_allow_html=True)
+# --- Sidebar Navigation ---
+st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
 
-chat_titles = list(st.session_state.chats.keys())
-selected_chat = st.sidebar.radio("Select chat:", chat_titles, index=chat_titles.index(st.session_state.current_chat))
-st.session_state.current_chat = selected_chat
-
+# New Chat button
 if st.sidebar.button("➕ New Chat"):
     new_title = f"Chat {len(st.session_state.chats)}"
     st.session_state.chats[new_title] = []
     st.session_state.current_chat = new_title
+    st.session_state.search_term = ""
     st.experimental_rerun()
 
-messages = st.session_state.chats[st.session_state.current_chat]
+# Search chat input
+search_input = st.sidebar.text_input("🔍 Search Chats", value=st.session_state.search_term)
+st.session_state.search_term = search_input.strip().lower()
 
-# Title
-st.markdown("<h2 class='mt-3'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
+# Filter chat titles based on search term
+chat_titles = list(st.session_state.chats.keys())
+if st.session_state.search_term:
+    filtered_titles = [title for title in chat_titles if st.session_state.search_term in title.lower()]
+else:
+    filtered_titles = chat_titles
+
+if not filtered_titles:
+    st.sidebar.info("No chats found.")
+    selected_chat = None
+else:
+    selected_chat = st.sidebar.radio("Select chat:", filtered_titles, index=filtered_titles.index(st.session_state.current_chat) if st.session_state.current_chat in filtered_titles else 0)
+    st.session_state.current_chat = selected_chat
+
+if selected_chat is None:
+    st.write("Please create or select a chat.")
+    st.stop()
+
+messages = st.session_state.chats[selected_chat]
+
+# Main title
+st.markdown("<h2 class='mt-3 text-center'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
 
 # Render chat message with Bootstrap styles
 def render_message(role, content):
@@ -69,19 +99,20 @@ def render_message(role, content):
         </div>
     """, unsafe_allow_html=True)
 
-# Display chat messages
+# Display chat messages in a scrollable container
 with st.container():
     st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
     for msg in messages:
         render_message(msg["role"], msg["content"])
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Chat input form
+# Centered input form with rounded edges
 with st.form(key="chat_form", clear_on_submit=True):
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
     user_input = st.text_area("You:", key="input", height=80, label_visibility="collapsed", placeholder="Type your message...")
+    st.markdown('</div>', unsafe_allow_html=True)
     submitted = st.form_submit_button("Send")
 
-# Handle new message submission
 if submitted and user_input.strip():
     messages.append({"role": "user", "content": user_input})
 
