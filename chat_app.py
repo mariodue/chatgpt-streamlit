@@ -6,11 +6,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 st.set_page_config(page_title="ChatGPT Bootstrap", page_icon="💬", layout="wide")
 
-# Bootstrap CSS + custom styles
 st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Chat styling (same as before) */
+        /* Chat styling */
         .chat-container {
             padding: 20px;
         }
@@ -33,7 +32,7 @@ st.markdown("""
             resize: none;
         }
 
-        /* Custom sidebar buttons (full width, equal length, no border lines) */
+        /* Minimalistic sidebar buttons */
         .custom-sidebar-btn {
             width: 100%;
             margin-bottom: 0.5rem;
@@ -41,26 +40,25 @@ st.markdown("""
             padding: 0.5rem 0;
             font-size: 1rem;
             font-weight: 500;
-            background-color: #0d6efd;
-            color: white;
-            border: none;
+            background-color: transparent !important;
+            color: inherit !important;
+            border: none !important;
             cursor: pointer;
             text-align: center;
             transition: background-color 0.15s ease-in-out;
             display: block;
         }
         .custom-sidebar-btn:hover {
-            background-color: #0b5ed7;
-            color: white;
+            background-color: #e0e0e0 !important;
+            color: inherit !important;
         }
         .custom-sidebar-btn:focus {
-            outline: none;
-            box-shadow: none;
+            outline: none !important;
+            box-shadow: none !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state keys
 if "chats" not in st.session_state:
     st.session_state.chats = {"New Chat": []}
 if "current_chat" not in st.session_state:
@@ -69,64 +67,6 @@ if "search_term" not in st.session_state:
     st.session_state.search_term = ""
 if "show_search" not in st.session_state:
     st.session_state.show_search = False
-if "new_chat_click" not in st.session_state:
-    st.session_state.new_chat_click = False
-if "search_chat_click" not in st.session_state:
-    st.session_state.search_chat_click = False
-
-# Sidebar navigation header
-st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
-
-# Custom button HTML with Streamlit JS callback for New Chat
-new_chat_html = """
-<form action="" method="post">
-    <button class="custom-sidebar-btn" name="new_chat_btn" type="submit">➕ New Chat</button>
-</form>
-"""
-
-search_chat_html = """
-<form action="" method="post">
-    <button class="custom-sidebar-btn" name="search_chat_btn" type="submit">🔍 Search Chats</button>
-</form>
-"""
-
-# Display buttons
-st.sidebar.markdown(new_chat_html, unsafe_allow_html=True)
-st.sidebar.markdown(search_chat_html, unsafe_allow_html=True)
-
-# Detect button clicks by reading query params / form data
-# Streamlit doesn’t have native form POST handler, but this trick works:
-
-clicked_new_chat = st.sidebar.button("Hidden new chat detector", key="hidden_new_chat_detector", help="", visible=False)
-clicked_search_chat = st.sidebar.button("Hidden search chat detector", key="hidden_search_chat_detector", help="", visible=False)
-
-# Since direct HTML buttons can’t trigger Streamlit actions directly,
-# use a workaround with st.experimental_get_query_params and st.experimental_set_query_params
-
-query_params = st.experimental_get_query_params()
-
-if "new_chat_btn" in query_params:
-    new_title = f"Chat {len(st.session_state.chats)}"
-    st.session_state.chats[new_title] = []
-    st.session_state.current_chat = new_title
-    st.session_state.search_term = ""
-    st.session_state.show_search = False
-    st.experimental_set_query_params()  # clear params to avoid repeat
-    st.experimental_rerun()
-
-if "search_chat_btn" in query_params:
-    st.session_state.show_search = not st.session_state.show_search
-    st.experimental_set_query_params()
-    st.experimental_rerun()
-
-# Because the above trick is tricky in some environments, 
-# I'll show a simpler approach using Streamlit buttons below instead, with HTML buttons only for styling.
-
-# For reliability, we’ll use Streamlit’s buttons with the custom style injected via JS:
-# Remove the above HTML forms and use normal Streamlit buttons with JS style injection instead
-
-# -----------------------------------------
-# Here's the *reliable* version with normal buttons styled equally:
 
 st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
 st.sidebar.markdown('<div style="width: 100%;">', unsafe_allow_html=True)
@@ -148,7 +88,6 @@ if st.session_state.show_search:
         search_input = st.text_input("Type to search chats", value=st.session_state.search_term)
         st.session_state.search_term = search_input.strip().lower()
 
-# JS injection to add custom class to sidebar buttons for perfect equal width and style
 st.sidebar.markdown("""
 <script>
 const buttons = window.parent.document.querySelectorAll('section[data-testid="stSidebar"] button');
@@ -158,7 +97,6 @@ buttons.forEach(btn => {
 </script>
 """, unsafe_allow_html=True)
 
-# Filter chats
 chat_titles = list(st.session_state.chats.keys())
 if st.session_state.search_term:
     filtered_titles = [t for t in chat_titles if st.session_state.search_term in t.lower()]
@@ -184,7 +122,6 @@ if selected_chat is None:
 
 messages = st.session_state.chats[selected_chat]
 
-# Main title
 st.markdown("<h2 class='mt-3 text-center'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
 
 def render_message(role, content):
