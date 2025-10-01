@@ -34,21 +34,21 @@ st.markdown("""
             resize: none;
         }
 
-        /* Custom sidebar button styles */
+        /* Sidebar button styling for equal width and no lines */
         .sidebar-btn {
+            display: block !important;
             width: 100% !important;
+            padding: 0.5rem 0 !important;
             margin-bottom: 0.5rem !important;
+            border-radius: 0.375rem !important;
             border: none !important;
             box-shadow: none !important;
-            border-radius: 0.375rem !important;  /* same as Bootstrap btn btn-primary */
-            padding: 0.375rem 0.75rem !important;
-            font-size: 1rem !important;
-            font-weight: 500 !important;
             background-color: #0d6efd !important;
             color: white !important;
-            cursor: pointer !important;
-            display: inline-block !important;
+            font-size: 1rem !important;
+            font-weight: 500 !important;
             text-align: center !important;
+            cursor: pointer !important;
             transition: background-color 0.15s ease-in-out !important;
         }
         .sidebar-btn:hover {
@@ -75,6 +75,9 @@ if "show_search" not in st.session_state:
 # --- Sidebar Navigation ---
 st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
 
+# Wrap buttons in a full-width container div
+st.sidebar.markdown('<div style="width: 100%;">', unsafe_allow_html=True)
+
 # New Chat button
 if st.sidebar.button("➕ New Chat", key="new_chat", help="Start a new chat"):
     new_title = f"Chat {len(st.session_state.chats)}"
@@ -87,20 +90,21 @@ if st.sidebar.button("➕ New Chat", key="new_chat", help="Start a new chat"):
 if st.sidebar.button("🔍 Search Chats", key="search_chat", help="Search your chats"):
     st.session_state.show_search = not st.session_state.show_search
 
+# Close the container div
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
+
 # Search expander popup
 if st.session_state.show_search:
     with st.sidebar.expander("Search Chats", expanded=True):
         search_input = st.text_input("Type to search chats", value=st.session_state.search_term)
         st.session_state.search_term = search_input.strip().lower()
 
-# JS to add sidebar-btn class to buttons (to apply the custom styles)
+# JS to add sidebar-btn class to all buttons inside sidebar for uniform styling
 st.sidebar.markdown("""
-    <script>
-    const btns = window.parent.document.querySelectorAll('button[kind="primary"]');
-    btns.forEach(btn => {
-        btn.classList.add('sidebar-btn');
-    });
-    </script>
+<script>
+const buttons = window.parent.document.querySelectorAll('section[data-testid="stSidebar"] button');
+buttons.forEach(btn => btn.classList.add('sidebar-btn'));
+</script>
 """, unsafe_allow_html=True)
 
 # Filter chat titles based on search term
@@ -114,13 +118,11 @@ if not filtered_titles:
     st.sidebar.info("No chats found.")
     selected_chat = None
 else:
-    # Select chat or fallback to first filtered
     if st.session_state.current_chat in filtered_titles:
         default_index = filtered_titles.index(st.session_state.current_chat)
     else:
         default_index = 0
         st.session_state.current_chat = filtered_titles[0]
-
     selected_chat = st.sidebar.radio("Select chat:", filtered_titles, index=default_index)
 
 st.session_state.current_chat = selected_chat
@@ -134,7 +136,6 @@ messages = st.session_state.chats[selected_chat]
 # Main title
 st.markdown("<h2 class='mt-3 text-center'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
 
-# Render chat message with Bootstrap styles
 def render_message(role, content):
     is_user = role == "user"
     avatar = "🧑" if is_user else "🤖"
@@ -151,14 +152,12 @@ def render_message(role, content):
         </div>
     """, unsafe_allow_html=True)
 
-# Display chat messages in a scrollable container
 with st.container():
     st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
     for msg in messages:
         render_message(msg["role"], msg["content"])
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Centered input form with rounded edges
 with st.form(key="chat_form", clear_on_submit=True):
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
     user_input = st.text_area("You:", key="input", height=80, label_visibility="collapsed", placeholder="Type your message...")
