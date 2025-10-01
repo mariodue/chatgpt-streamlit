@@ -33,6 +33,32 @@ st.markdown("""
             border-radius: 20px !important;
             resize: none;
         }
+
+        /* Custom sidebar button styles */
+        .sidebar-btn {
+            width: 100% !important;
+            margin-bottom: 0.5rem !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0.375rem !important;  /* same as Bootstrap btn btn-primary */
+            padding: 0.375rem 0.75rem !important;
+            font-size: 1rem !important;
+            font-weight: 500 !important;
+            background-color: #0d6efd !important;
+            color: white !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            text-align: center !important;
+            transition: background-color 0.15s ease-in-out !important;
+        }
+        .sidebar-btn:hover {
+            background-color: #0b5ed7 !important;
+            color: white !important;
+        }
+        .sidebar-btn:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -50,7 +76,7 @@ if "show_search" not in st.session_state:
 st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
 
 # New Chat button
-if st.sidebar.button("➕ New Chat"):
+if st.sidebar.button("➕ New Chat", key="new_chat", help="Start a new chat"):
     new_title = f"Chat {len(st.session_state.chats)}"
     st.session_state.chats[new_title] = []
     st.session_state.current_chat = new_title
@@ -58,7 +84,7 @@ if st.sidebar.button("➕ New Chat"):
     st.experimental_rerun()
 
 # Search Chats toggle button
-if st.sidebar.button("🔍 Search Chats"):
+if st.sidebar.button("🔍 Search Chats", key="search_chat", help="Search your chats"):
     st.session_state.show_search = not st.session_state.show_search
 
 # Search expander popup
@@ -66,6 +92,16 @@ if st.session_state.show_search:
     with st.sidebar.expander("Search Chats", expanded=True):
         search_input = st.text_input("Type to search chats", value=st.session_state.search_term)
         st.session_state.search_term = search_input.strip().lower()
+
+# JS to add sidebar-btn class to buttons (to apply the custom styles)
+st.sidebar.markdown("""
+    <script>
+    const btns = window.parent.document.querySelectorAll('button[kind="primary"]');
+    btns.forEach(btn => {
+        btn.classList.add('sidebar-btn');
+    });
+    </script>
+""", unsafe_allow_html=True)
 
 # Filter chat titles based on search term
 chat_titles = list(st.session_state.chats.keys())
