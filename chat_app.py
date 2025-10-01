@@ -2,10 +2,13 @@ import streamlit as st
 import openai
 import os
 
+# Set OpenAI API key from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Page config
 st.set_page_config(page_title="ChatGPT Bootstrap", page_icon="💬", layout="wide")
 
+# Inject Bootstrap CSS
 st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -25,11 +28,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state
 if "chats" not in st.session_state:
     st.session_state.chats = {"New Chat": []}
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "New Chat"
 
+# Sidebar - Chat History
 st.sidebar.markdown('<h4 class="mt-4">🧠 Chat History</h4>', unsafe_allow_html=True)
 
 chat_titles = list(st.session_state.chats.keys())
@@ -44,8 +49,10 @@ if st.sidebar.button("➕ New Chat"):
 
 messages = st.session_state.chats[st.session_state.current_chat]
 
+# Title
 st.markdown("<h2 class='mt-3'>💬 ChatGPT Bootstrap Interface</h2>", unsafe_allow_html=True)
 
+# Render chat message with Bootstrap styles
 def render_message(role, content):
     is_user = role == "user"
     avatar = "🧑" if is_user else "🤖"
@@ -62,27 +69,28 @@ def render_message(role, content):
         </div>
     """, unsafe_allow_html=True)
 
+# Display chat messages
 with st.container():
     st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
     for msg in messages:
         render_message(msg["role"], msg["content"])
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Chat input form
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_area("You:", key="input", height=80, label_visibility="collapsed", placeholder="Type your message...")
     submitted = st.form_submit_button("Send")
 
+# Handle new message submission
 if submitted and user_input.strip():
     messages.append({"role": "user", "content": user_input})
 
     try:
         response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
+            model="gpt-3.5-turbo",
+            messages=messages,
         )
-
-        )
-        assistant_reply = response["choices"][0]["message"]["content"]
+        assistant_reply = response.choices[0].message.content
         messages.append({"role": "assistant", "content": assistant_reply})
         st.experimental_rerun()
     except Exception as e:
