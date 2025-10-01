@@ -43,6 +43,8 @@ if "current_chat" not in st.session_state:
     st.session_state.current_chat = "New Chat"
 if "search_term" not in st.session_state:
     st.session_state.search_term = ""
+if "show_search" not in st.session_state:
+    st.session_state.show_search = False
 
 # --- Sidebar Navigation ---
 st.sidebar.markdown('<h4 class="mt-4">🧠 Navigation</h4>', unsafe_allow_html=True)
@@ -55,9 +57,15 @@ if st.sidebar.button("➕ New Chat"):
     st.session_state.search_term = ""
     st.experimental_rerun()
 
-# Search chat input
-search_input = st.sidebar.text_input("🔍 Search Chats", value=st.session_state.search_term)
-st.session_state.search_term = search_input.strip().lower()
+# Search Chats toggle button
+if st.sidebar.button("🔍 Search Chats"):
+    st.session_state.show_search = not st.session_state.show_search
+
+# Search expander popup
+if st.session_state.show_search:
+    with st.sidebar.expander("Search Chats", expanded=True):
+        search_input = st.text_input("Type to search chats", value=st.session_state.search_term)
+        st.session_state.search_term = search_input.strip().lower()
 
 # Filter chat titles based on search term
 chat_titles = list(st.session_state.chats.keys())
@@ -70,8 +78,16 @@ if not filtered_titles:
     st.sidebar.info("No chats found.")
     selected_chat = None
 else:
-    selected_chat = st.sidebar.radio("Select chat:", filtered_titles, index=filtered_titles.index(st.session_state.current_chat) if st.session_state.current_chat in filtered_titles else 0)
-    st.session_state.current_chat = selected_chat
+    # Select chat or fallback to first filtered
+    if st.session_state.current_chat in filtered_titles:
+        default_index = filtered_titles.index(st.session_state.current_chat)
+    else:
+        default_index = 0
+        st.session_state.current_chat = filtered_titles[0]
+
+    selected_chat = st.sidebar.radio("Select chat:", filtered_titles, index=default_index)
+
+st.session_state.current_chat = selected_chat
 
 if selected_chat is None:
     st.write("Please create or select a chat.")
